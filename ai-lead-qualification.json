@@ -1,0 +1,365 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "58b4244e-b4e9-469a-96be-4551467d9bc8",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -32,
+        -192
+      ],
+      "id": "fa401897-8a3f-425d-9644-ba8cb3c184be",
+      "name": "Webhook",
+      "webhookId": "58b4244e-b4e9-469a-96be-4551467d9bc8"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "4968a440-e20b-4fee-b70b-d3b6fe10d01d",
+              "leftValue": "={{ $json.email }}",
+              "rightValue": "@",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        416,
+        -288
+      ],
+      "id": "81c4c34f-7341-41d4-a496-408993082895",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7e4cf64d-25cc-4314-90a7-c0b584a756e0",
+              "name": "name ",
+              "value": "={{ $json.name }}",
+              "type": "string"
+            },
+            {
+              "id": "bd7397e9-7104-40c3-9e32-f5cf7ca1517d",
+              "name": "email ",
+              "value": "={{ $json.email }}",
+              "type": "string"
+            },
+            {
+              "id": "db48dfcf-4a00-421c-994d-b988145c647d",
+              "name": "company ",
+              "value": "={{ $json.company }}",
+              "type": "string"
+            },
+            {
+              "id": "a1910182-371b-475d-bf71-a921bb7fff14",
+              "name": "score ",
+              "value": "Pending",
+              "type": "string"
+            },
+            {
+              "id": "6165f8fb-bb47-4d9b-92dd-975664e01c48",
+              "name": "title",
+              "value": "={{ $json.title }}",
+              "type": "string"
+            },
+            {
+              "id": "aaf6197d-913a-4907-b964-dda0ca30579c",
+              "name": "message",
+              "value": "={{ $json.message }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        640,
+        -288
+      ],
+      "id": "96994c61-372c-4bcc-ad37-3aae700690bd",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization  ",
+              "value": "Your API Key"
+            },
+            {
+              "name": "Content-Type ",
+              "value": " application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"llama-3.3-70b-versatile\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"You are a lead qualification AI.\\n\\nAnalyze this lead:\\n\\nName: {{ $json['name '] }}\\nEmail: {{ $json['email '] }}\\nCompany: {{ $json['company '] }}\\nJob Title:{{ $json.title }}\\nMessage: {{ $json.message }}\\n\\nScore this lead from 1 to 10 based on:\\n- Seniority\\n- Company relevance\\n- Intent level\\n\\nReturn ONLY JSON like this:\\n{\\\"score\\\": 8, \\\"reason\\\": \\\"High intent, manager role\\\"}\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        864,
+        -288
+      ],
+      "id": "5cfbd0dc-299d-4c9e-9cd0-b7964eb66cf3",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "const content = $json.choices[0].message.content;\n\nconst parsed = JSON.parse(content);\n\nreturn [\n  {\n    json: {\n      ...$json,\n      score: parsed.score,\n      reason: parsed.reason\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1088,
+        -288
+      ],
+      "id": "9c6a21c3-3329-4ae1-842e-12131cca9d5f",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.score }}",
+                    "rightValue": 7,
+                    "operator": {
+                      "type": "number",
+                      "operation": "gte"
+                    },
+                    "id": "dedb4778-0295-498d-88bf-a07abb2d4ce7"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Qualified path"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "1dcb16b9-97f5-42d1-8a41-cfba757c5b6c",
+                    "leftValue": "={{ $json.score }}",
+                    "rightValue": 7,
+                    "operator": {
+                      "type": "number",
+                      "operation": "lt"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Nurture path"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        1312,
+        -288
+      ],
+      "id": "d68505cd-34c7-45e8-a3da-3a71bd151aa2",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://hooks.slack.com/services/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",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"🔥 New Qualified Lead!\\n\\nName: {{ $('Edit Fields').item.json['name '] }}\\nEmail: {{ $('Edit Fields').item.json['email '] }} \\nCompany: {{ $('Edit Fields').item.json['company '] }} \\n\\nScore: {{$json.score}}/10\\nReason: {{$json.reason}}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1536,
+        -288
+      ],
+      "id": "b9a9d3ad-617f-4602-9a0e-10cc59150d71",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"status\": \"success\",\n  \"message\": \"Lead received successfully\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        192,
+        -96
+      ],
+      "id": "428adcd8-4d45-4591-8f81-9e67e366ae71",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "const fields = $json.body.data.fields;\nconst get = (label) => fields.find(f => f.label === label)?.value || '';\n\nreturn [{\n  json: {\n    name: get('Full Name'),\n    email: get('Email'),\n    company: get('Company'),\n    title: get('Title'),\n    message: get('Message'),\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        192,
+        -288
+      ],
+      "id": "17e32873-1cb6-49ce-9471-31137e8a4acd",
+      "name": "Code in JavaScript1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook": {
+      "main": [
+        []
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "971ab192-cf9c-4eae-8ee4-a66de2837bb5",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "818d3de16aaf9c4148469b820fe52dde9a39ef5c23b2d315f74dc06ff5423a3f"
+  },
+  "id": "l3d6NihpIjIlSax4",
+  "tags": []
+}
