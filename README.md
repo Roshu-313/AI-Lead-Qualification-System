@@ -30,7 +30,7 @@ An AI-powered automation system that captures, analyzes, and scores leads in rea
 
 ## 🎥 Demo
 
-Loom Video: [[Add your Loom link here](https://www.loom.com/share/afff8e51224d4e7aa363ac0af8fd4c31)]
+Loom Video: [(https://www.loom.com/share/afff8e51224d4e7aa363ac0af8fd4c31)]
 
 ## 📦 Setup Instructions
 
